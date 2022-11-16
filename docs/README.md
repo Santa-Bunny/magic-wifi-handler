@@ -12,8 +12,8 @@ or you can install only the boost.asio library before installing this one.
 
 Once boost.asio is installed you can download this library to your device and run the install.sh file to install it to your device.
 
-** Note: As this project is still in development the install.sh file may not be functional at the moment. **
-** if this is the case, please install the contents of the lib folder manually to your c++ base folder. **
+**Note: As this project is still in development the install.sh file may not be functional at the moment.
+if this is the case, please install the contents of the lib folder manually to your c++ base folder.**
 
 After installation on any project just use
 ```cpp
