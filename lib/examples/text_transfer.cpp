@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <thread>
 
 #define DROP        0x1
@@ -14,11 +15,16 @@ using namespace Tins;
 
 int main(int argc, char* argv[]) {
 
+
     if (argc == 1 || argv[1][1] == 'h'){
-        std::cout << "correct use: " << argv[0] << "<MAC Address>\n";
+        std::cout << "correct use: " << argv[0] << " <MAC Address>\n\n";
+        std::cout << "write all messages in forms of <priority bit> <message>\n"
+            << "For example:\n1 high priority message!\n0 low priority message\n\n";
+        std::cout << "every sent message that makes it to it's destination should receive an\n" 
+            << "-->Ack message. As well all messages received will be displayed with -->\n";
         return 0;
     }
-    std::string message = "test";
+    
 
     // We'll use the default interface(default gateway)
     NetworkInterface iface = NetworkInterface::default_interface();
@@ -46,21 +52,49 @@ int main(int argc, char* argv[]) {
     
     Dot1Q pdu = Dot1Q();
     pdu.id(0x00);
-    pdu.cfi(NO_DROP);
 
-    pdu.priority(HIGH_PRIO);
-    RawPDU* rpdu = new RawPDU(message);
-    pdu.inner_pdu(rpdu);
+    std::stringstream s;
+    bool priority;
+    std::string message = "test";
+    
+    std::getline(std::cin, s);
+    
+    if (s[0] != 'q'){
+        s >> priority;
+        std::getline(s, message);
+    }
+    else {
+        message = 'q';
+    }
 
-    /* Create a RawPDU containing the string "I'm a payload!".
-     */
-    eth /= pdu;
     
-    // The actual sender
-    PacketSender sender;
+
+    while(message[0] != 'q') {
+
+        pdu.cfi(NO_DROP);
+        pdu.priority(HIGH_PRIO);
+        RawPDU* rpdu = new RawPDU(message);
+        pdu.inner_pdu(rpdu);
+
+        /* Create a RawPDU containing the string "I'm a payload!".
+        */
+        eth /= pdu;
+        
+        // The actual sender
+        PacketSender sender;
+        
+        // Send the packet through the default interface
+        sender.send(eth, iface);
+        std::getline(std::cin, s);
     
-    // Send the packet through the default interface
-    sender.send(eth, iface);
+        if (s[0] != 'q'){
+            s >> priority;
+            std::getline(s, message);
+        }
+        else {
+            message = 'q';
+        }
+    }
 }
 // // same as above, just shorter
 // EthernetII eth = EthernetII("77:22:33:11:ad:ad", info.hw_addr) / 
