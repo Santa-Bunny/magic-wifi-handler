@@ -1,17 +1,34 @@
 
 #include <tins/tins.h>
+#include "../magicWiFi.hpp"
 #include <cassert>
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <thread>
 
-#define DROP        0x1
-#define NO_DROP     0x0
-#define HIGH_PRIO   0x1
-#define LOW_PRIO    0x0
+
 
 using namespace Tins;
+
+
+
+#define SNIFFER
+#define SENDER
+
+std::mutex cout_lock;
+
+void sniffer(){
+    SnifferConfiguration::set_immediate_mode(1);
+    SnifferConfiguration conf;
+    conf.set_promisc_mode(true);
+    conf.set_filter("port 13");
+
+    Sniffer sniff("eth0", conf);
+
+    sniff.sniff_loop(magicwifi::priority_sniff(), 0);
+}
+
 
 int main(int argc, char* argv[]) {
 
@@ -24,34 +41,9 @@ int main(int argc, char* argv[]) {
             << "-->Ack message. As well all messages received will be displayed with -->\n";
         return 0;
     }
-    
 
-    // We'll use the default interface(default gateway)
-    NetworkInterface iface = NetworkInterface::default_interface();
+    magicwifi::MAC_addr = string(argv[1]);
     
-    /* Retrieve this structure which holds the interface's IP, 
-     * broadcast, hardware address and the network mask.
-     */
-    NetworkInterface::Info info = iface.addresses();
-    
-    /* Create an Ethernet II PDU which will be sent to 
-     * 77:22:33:11:ad:ad using the default interface's hardware 
-     * address as the sender.
-     */
-    EthernetII eth(std::string(argv[1]), info.hw_addr);
-    
-    /* Create an IP PDU, with 192.168.0.1 as the destination address
-     * and the default interface's IP address as the sender.
-     */
-    eth /= IP("0.0.0.0", info.ip_addr);
-    
-    /* Create a TCP PDU using 13 as the destination port, and 15 
-     * as the source port.
-     */
-    eth /= TCP(13, 15);
-    
-    Dot1Q pdu = Dot1Q();
-    pdu.id(0x00);
 
     std::stringstream s;
     bool priority;
@@ -66,33 +58,27 @@ int main(int argc, char* argv[]) {
     else {
         message = 'q';
     }
-
+    magicwifi::SendPacket(1, message);
     
+
+#ifdef SNIFFER
+    std::thread t1(sniffer(), nullptr);
+#endif //SNIFFER
 
     while(message[0] != 'q') {
 
-        pdu.cfi(NO_DROP);
-        pdu.priority(HIGH_PRIO);
-        RawPDU* rpdu = new RawPDU(message);
-        pdu.inner_pdu(rpdu);
-
-        /* Create a RawPDU containing the string "I'm a payload!".
-        */
-        eth /= pdu;
         
-        // The actual sender
-        PacketSender sender;
         
-        // Send the packet through the default interface
-        sender.send(eth, iface);
+        
         std::getline(std::cin, s);
     
         if (s[0] != 'q'){
             s >> priority;
             std::getline(s, message);
-        }
-        else {
-            message = 'q';
+            cout_lock.lock();
+            std::cout << priority << " " << message << std::endl;
+            cout_lock.unlock();
+            magicwifi::SendPacket(priority, message);
         }
     }
 }
