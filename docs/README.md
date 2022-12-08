@@ -2,7 +2,7 @@
 ### An ethernet frame handle for developers working on [Magic WiFi](https://github.com/bluebandit21/magic-wifi)
 
 This library was built for developers to modify their software work with the Magic WiFi device as published in [github.com/bluebandit21/magic-wifi](https://github.com/bluebandit21/magic-wifi).
-It adds priorities to sent ethernet frames using the boost.asio library such that higher priority data can be sent
+It adds priorities to sent ethernet frames using the LibTins library such that higher priority data can be sent
 over lower quality signals.
 
 
@@ -20,4 +20,4 @@ After installation, on any project just use
 ```
 You can then refer to the libtins library for definitions.
 
-To differentiate between libtins and magicWiFi, to use magicWiFi, the namespace is `magicwifi::` instead of `libtins::`
+To differentiate between libtins and magicWiFi, to use magicWiFi, the namespace is `magicwifi::` instead of `Tins::`
