@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <mutex>
 
 
 
@@ -19,14 +20,13 @@ using namespace Tins;
 std::mutex cout_lock;
 
 void sniffer(){
-    SnifferConfiguration::set_immediate_mode(1);
     SnifferConfiguration conf;
     conf.set_promisc_mode(true);
     conf.set_filter("port 13");
+    conf.set_immediate_mode(1);
 
     Sniffer sniff("eth0", conf);
-
-    sniff.sniff_loop(magicwifi::priority_sniff(), 0);
+    sniff.sniff_loop(magicwifi::priority_sniff, 0);
 }
 
 
@@ -42,18 +42,20 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    magicwifi::MAC_addr = string(argv[1]);
+    magicwifi::MAC_addr = std::string(argv[1]);
     
 
-    std::stringstream s;
+    std::stringstream userInputStream;
+    std::string userInputString;
     bool priority;
     std::string message = "test";
     
-    std::getline(std::cin, s);
+    std::getline(std::cin, userInputString);
+    userInputStream << userInputString;
     
-    if (s[0] != 'q'){
-        s >> priority;
-        std::getline(s, message);
+    if (userInputString[0] != 'q'){
+        userInputStream >> priority;
+        std::getline(userInputStream, message);
     }
     else {
         message = 'q';
@@ -62,19 +64,17 @@ int main(int argc, char* argv[]) {
     
 
 #ifdef SNIFFER
-    std::thread t1(sniffer(), nullptr);
+    std::thread t1(sniffer);
 #endif //SNIFFER
 
     while(message[0] != 'q') {
-
         
-        
-        
-        std::getline(std::cin, s);
+        std::getline(std::cin, userInputString);
+        userInputStream << userInputString;
     
-        if (s[0] != 'q'){
-            s >> priority;
-            std::getline(s, message);
+        if (userInputString[0] != 'q'){
+            userInputStream >> priority;
+            std::getline(userInputStream, message);
             cout_lock.lock();
             std::cout << priority << " " << message << std::endl;
             cout_lock.unlock();
