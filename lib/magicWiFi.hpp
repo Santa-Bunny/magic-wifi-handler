@@ -11,8 +11,20 @@ using namespace Tins;
 #define HIGH_PRIO   0x1
 #define LOW_PRIO    0x0
 namespace magicwifi {
-    int sniff_amount = 0;
+    std::string payload_to_string(Tins::RawPDU::payload_type payload){
+        std::string str;
+        for (size_t i = 0; i < payload.size(); i++)
+        {
+            str += payload[i];
+        }
+        
+        return str;
+    }
 
+
+
+    int sniff_amount = 0;
+    std::string ack_reply("Ack");
     std::string MAC_addr;
 
 
@@ -72,24 +84,28 @@ namespace magicwifi {
         bool priority_sniff(PDU & pdu){
         // Search for it. If there is no Dot1Q PDU in the packet, 
         // the loop goes on
+        bool dot_priority = 0;
         try {
             const Dot1Q &dot = pdu.rfind_pdu<Dot1Q>(); // non-const works as well
+            dot_priority = dot.priority();
         }
         catch (const pdu_not_found &e) {
             return true;
         }
-
+        
 
         sniff_amount++;
         const RawPDU &rpdu = pdu.rfind_pdu<RawPDU>();
 
-        if (strcmp(rpdu.payload(), "Ack") == 0){
+        std::string payload_msg = payload_to_string(rpdu.payload());
+
+        if (strcmp(payload_msg.c_str(), "Ack") == 0){
             std::cout << "--> Ack" << std::endl; 
         }
         else {
-            std::cout << "--> " << dot.priority() << " ";
-            std::cout << rpdu.payload() << std::endl;
-            SendPacket(dot.priority(), "Ack");
+            std::cout << "--> " << dot_priority << " ";
+            std::cout << payload_msg << std::endl;
+            SendPacket(dot_priority, ack_reply);
         }
 
         if (sniff_amount > 1000) return false;
