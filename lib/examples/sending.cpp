@@ -28,6 +28,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    PacketSender sender;
+    IP pkt = IP("192.168.0.1") / TCP(22) / RawPDU("foo");
+    sender.send(pkt);
+    std::cin.ignore(5);
     magicwifi::MAC_addr = std::string(argv[1]);
     
 
@@ -54,7 +58,7 @@ int main(int argc, char* argv[]) {
         std::getline(std::cin, userInputString);
         userInputStream << userInputString;
     
-        if (userInputString[0] != 'q'){
+        if (userInputString[0] != 'q') {
             userInputStream >> priority;
             std::getline(userInputStream, message);
             std::cout << priority << " " << message << std::endl;
